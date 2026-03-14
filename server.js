@@ -26,6 +26,31 @@ const pool = new Pool({
 });
 
 // ============================================================
+// Root landing page
+// ============================================================
+app.get('/', (req, res) => {
+  res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🍷 我有酒，你有故事嗎？</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Noto Sans TC',sans-serif;
+background:#0f0b07;color:#f5efe6;text-align:center;padding:24px}
+h1{font-family:serif;font-size:clamp(36px,8vw,64px);color:#d4a24e;margin-bottom:8px}
+h2{font-family:serif;font-size:clamp(18px,4vw,28px);color:#e8c88a;font-weight:300;font-style:italic;margin-bottom:32px;letter-spacing:4px}
+.line{width:60px;height:1px;background:linear-gradient(90deg,transparent,#d4a24e,transparent);margin:0 auto 32px}
+p{color:rgba(245,239,230,0.5);font-size:14px;line-height:1.8;max-width:360px;margin:0 auto}
+.status{display:inline-block;margin-top:32px;background:rgba(212,162,78,0.1);border:1px solid rgba(212,162,78,0.2);border-radius:8px;padding:8px 20px;font-size:12px;color:#d4a24e}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#27ae60;margin-right:8px;box-shadow:0 0 8px #27ae60}
+</style></head><body>
+<div><div style="font-size:72px;margin-bottom:8px">🍷</div>
+<h1>我有酒</h1><h2>你有故事嗎？</h2>
+<div class="line"></div>
+<p>Story Night API Server<br>此為活動後端服務</p>
+<div class="status"><span class="dot"></span>系統運行中</div>
+</div></body></html>`);
+});
+
+// ============================================================
 // Health check
 // ============================================================
 app.get('/api/health', async (req, res) => {
