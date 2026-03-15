@@ -219,7 +219,7 @@ function GospelPage({ eventState }) {
 
 // ============ 跟進表單頁 ============
 
-function FollowUpPage({ myInfo }) {
+function FollowUpPage({ myInfo, broadcast }) {
   const [phase, setPhase] = useState("form");
   const [fd, setFd] = useState({ name: myInfo?.name || "", phone: "", ig: "", line: "", table: myInfo?.tableName || "", interests: [], feedback: "" });
   const [saveStatus, setSaveStatus] = useState("");
@@ -231,6 +231,8 @@ function FollowUpPage({ myInfo }) {
     setPhase("saving"); setSaveStatus("正在儲存...");
     const contact = [fd.phone && `📱${fd.phone}`, fd.ig && `IG:${fd.ig}`, fd.line && `LINE:${fd.line}`].filter(Boolean).join(" | ");
     const result = await writeToAPI({ ...fd, phone: contact });
+    // Broadcast follow-up data to admin
+    broadcast.send("participant:followup", { id: Date.now(), name: fd.name, phone: fd.phone, ig: fd.ig, line: fd.line, table: fd.table, interests: fd.interests, feedback: fd.feedback });
     setSaveStatus(result.success ? "✅ 已儲存" : "⚠️ 稍後同步");
     setTimeout(() => setPhase("done"), 1200);
   };
@@ -343,7 +345,7 @@ export default function PublicApp() {
       {effectivePage === "waiting" && <WaitingPage eventState={eventState} />}
       {effectivePage === "voting" && <VotingPage eventState={eventState} myInfo={myInfo} broadcast={broadcast} />}
       {effectivePage === "gospel" && <GospelPage eventState={eventState} />}
-      {effectivePage === "followup" && <FollowUpPage myInfo={myInfo} />}
+      {effectivePage === "followup" && <FollowUpPage myInfo={myInfo} broadcast={broadcast} />}
     </div>
   );
 }

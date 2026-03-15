@@ -351,18 +351,19 @@ function PhoneStoryRound({ round, participants, tableCount, scores, setScores, o
 
 // ============ EVENT SETUP ============
 
-function EventSetupScreen({ onEventCreated }) {
-  const [eventName, setEventName] = useState("故事之夜 Vol.1");
-  const [tableCount, setTableCount] = useState(8);
+function EventSetupScreen({ onEventCreated, config, setConfig }) {
   const [creating, setCreating] = useState(false);
   const [eventData, setEventData] = useState(null);
   const is = { width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,162,78,0.2)", borderRadius: 8, padding: "12px 16px", color: T.text, fontFamily: "'Noto Sans TC'", fontSize: 16, outline: "none" };
+  const labelStyle = { fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 13, fontWeight: 500, display: "block", marginBottom: 6 };
+  const sectionStyle = { background: T.bgCard, borderRadius: 16, padding: 24, width: "100%", maxWidth: 500, border: "1px solid rgba(212,162,78,0.15)", marginBottom: 16 };
+  const chipBtn = (active) => ({ flex: 1, background: active ? T.gold : "transparent", color: active ? T.bg : T.textMuted, border: `1px solid ${active ? T.gold : "rgba(212,162,78,0.3)"}`, borderRadius: 8, padding: "10px", cursor: "pointer", fontFamily: "'Noto Sans TC'", fontSize: 15, fontWeight: 600, transition: "all 0.2s" });
 
   const createEvent = async () => {
     setCreating(true);
     if (API_URL) {
-      try { const resp = await fetch(`${API_URL}/api/events`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: eventName, table_count: tableCount }) }); const data = await resp.json(); setEventData(data); } catch (err) { console.error(err); setEventData({ id: 1, name: eventName, demo: true }) }
-    } else { setEventData({ id: 1, name: eventName, demo: true }); }
+      try { const resp = await fetch(`${API_URL}/api/events`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: config.eventName, table_count: config.tableCount }) }); const data = await resp.json(); setEventData(data); } catch (err) { console.error(err); setEventData({ id: 1, name: config.eventName, demo: true }) }
+    } else { setEventData({ id: 1, name: config.eventName, demo: true }); }
     setCreating(false);
   };
 
@@ -372,7 +373,10 @@ function EventSetupScreen({ onEventCreated }) {
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
       <div style={{ fontSize: 48, marginBottom: 8 }}>🎉</div>
       <h2 style={{ fontFamily: "'Playfair Display',serif", color: T.gold, fontSize: 28, marginBottom: 4 }}>活動已建立</h2>
-      <p style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 16, marginBottom: 24 }}>{eventData.name}</p>
+      <p style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 16, marginBottom: 8 }}>{eventData.name}</p>
+      <div style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 13, marginBottom: 24, textAlign: "center", lineHeight: 1.8 }}>
+        {config.tableCount} 桌 · {config.totalRounds} 回合 · 每人 {config.timerDuration / 60} 分鐘
+      </div>
       <div style={{ background: T.bgCard, borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, border: "1px solid rgba(212,162,78,0.2)", textAlign: "center", marginBottom: 24 }}>
         <p style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 14, marginBottom: 16 }}>📱 讓參加者掃描此 QR Code 加入活動</p>
         <QRCodeDisplay url={eventUrl} size={220} />
@@ -386,14 +390,106 @@ function EventSetupScreen({ onEventCreated }) {
       <div style={{ fontSize: 48, marginBottom: 8 }}>🍷</div>
       <h2 style={{ fontFamily: "'Playfair Display',serif", color: T.gold, fontSize: 28, marginBottom: 4 }}>建立今晚的活動</h2>
       <p style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 14, marginBottom: 32 }}>設定完成後會產生 QR Code 讓參加者加入</p>
-      <div style={{ background: T.bgCard, borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, border: "1px solid rgba(212,162,78,0.15)" }}>
-        <div style={{ marginBottom: 16 }}><label style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 13, fontWeight: 500, display: "block", marginBottom: 6 }}>活動名稱</label>
-          <input value={eventName} onChange={e => setEventName(e.target.value)} placeholder="故事之夜 Vol.1" style={is} onFocus={e => e.target.style.borderColor = T.gold} onBlur={e => e.target.style.borderColor = "rgba(212,162,78,0.2)"} />
+
+      {/* 活動名稱 */}
+      <div style={sectionStyle}>
+        <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>📋 基本資訊</div>
+        <label style={labelStyle}>活動名稱</label>
+        <input value={config.eventName} onChange={e => setConfig(p => ({ ...p, eventName: e.target.value }))} placeholder="故事之夜 Vol.1" style={is} onFocus={e => e.target.style.borderColor = T.gold} onBlur={e => e.target.style.borderColor = "rgba(212,162,78,0.2)"} />
+      </div>
+
+      {/* 桌數 */}
+      <div style={sectionStyle}>
+        <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>🪑 桌數設定</div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          {[4, 5, 6, 7, 8, 9, 10].map(n => (
+            <button key={n} onClick={() => setConfig(p => ({ ...p, tableCount: n }))} style={{ ...chipBtn(config.tableCount === n), flex: "0 0 auto", padding: "8px 14px", fontSize: 14 }}>{n}</button>
+          ))}
         </div>
-        <div style={{ marginBottom: 20 }}><label style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 13, fontWeight: 500, display: "block", marginBottom: 8 }}>桌數</label>
-          <div style={{ display: "flex", gap: 8 }}>{[6, 8, 10].map(n => <button key={n} onClick={() => setTableCount(n)} style={{ flex: 1, background: tableCount === n ? T.gold : "transparent", color: tableCount === n ? T.bg : T.textMuted, border: `1px solid ${tableCount === n ? T.gold : "rgba(212,162,78,0.3)"}`, borderRadius: 8, padding: "10px", cursor: "pointer", fontFamily: "'Noto Sans TC'", fontSize: 15, fontWeight: 600, transition: "all 0.2s" }}>{n} 桌</button>)}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 12 }}>自訂：</span>
+          <input type="number" min={2} max={20} value={config.tableCount} onChange={e => { const v = parseInt(e.target.value); if (v >= 2 && v <= 20) setConfig(p => ({ ...p, tableCount: v })); }} style={{ ...is, width: 80, textAlign: "center", padding: "8px 12px" }} />
+          <span style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 12 }}>桌（2~20）</span>
         </div>
-        <GoldButton onClick={createEvent} disabled={!eventName.trim() || creating} style={{ width: "100%" }}>{creating ? "建立中..." : "🎲 建立活動 & 產生 QR Code"}</GoldButton>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
+          {Array.from({ length: config.tableCount }).map((_, i) => (
+            <div key={i} style={{ background: "rgba(212,162,78,0.08)", borderRadius: 8, padding: "4px 10px", display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ fontSize: 14 }}>{TABLE_EMOJIS[i] || "🍷"}</span>
+              <span style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 11 }}>{TABLES[i] || `第${i + 1}桌`}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 回合數 */}
+      <div style={sectionStyle}>
+        <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>🎯 比賽回合數</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {[1, 2, 3].map(n => (
+            <button key={n} onClick={() => setConfig(p => ({ ...p, totalRounds: n }))} style={chipBtn(config.totalRounds === n)}>{n} 回合</button>
+          ))}
+        </div>
+        <p style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 12, marginTop: 8 }}>
+          {config.totalRounds === 1 ? "單回合：適合小型聚會" : config.totalRounds === 2 ? "雙回合：暖場 + 深度故事，推薦！" : "三回合：完整賽制，適合大型活動"}
+        </p>
+      </div>
+
+      {/* 說書時間 */}
+      <div style={sectionStyle}>
+        <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>⏱️ 每人說書時間</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {[90, 120, 180, 240, 300].map(s => (
+            <button key={s} onClick={() => setConfig(p => ({ ...p, timerDuration: s }))} style={chipBtn(config.timerDuration === s)}>
+              {s >= 60 ? `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}` : `${s}秒`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 主題選項 */}
+      <div style={sectionStyle}>
+        <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>🎲 各回合主題池</div>
+        {Array.from({ length: config.totalRounds }).map((_, ri) => (
+          <div key={ri} style={{ marginBottom: ri < config.totalRounds - 1 ? 16 : 0 }}>
+            <div style={{ fontFamily: "'Noto Sans TC'", color: T.goldLight, fontSize: 13, fontWeight: 600, marginBottom: 6 }}>第 {ri + 1} 回合</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {(ALL_TOPICS[ri] || ALL_TOPICS[0]).map((t, ti) => (
+                <span key={ti} style={{ background: "rgba(212,162,78,0.1)", border: "1px solid rgba(212,162,78,0.2)", borderRadius: 16, padding: "4px 12px", fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 12 }}>{t}</span>
+              ))}
+            </div>
+          </div>
+        ))}
+        <p style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 11, marginTop: 8 }}>主題會在比賽開始時由轉盤隨機選出，可在「進階設定」中自訂</p>
+      </div>
+
+      {/* 中場休息 */}
+      {config.totalRounds > 1 && (
+        <div style={sectionStyle}>
+          <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>☕ 中場休息時間</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {[180, 300, 600].map(s => (
+              <button key={s} onClick={() => setConfig(p => ({ ...p, intermissionDuration: s }))} style={chipBtn(config.intermissionDuration === s)}>
+                {Math.floor(s / 60)} 分鐘
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 建立按鈕 */}
+      <div style={{ width: "100%", maxWidth: 500, marginTop: 8 }}>
+        <div style={{ background: "rgba(212,162,78,0.05)", borderRadius: 12, padding: "16px 20px", marginBottom: 16, border: "1px solid rgba(212,162,78,0.1)" }}>
+          <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>📊 活動摘要</div>
+          <div style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 12, lineHeight: 2 }}>
+            活動：{config.eventName || "（未命名）"}<br />
+            桌數：{config.tableCount} 桌<br />
+            回合：{config.totalRounds} 回合<br />
+            每人時間：{config.timerDuration >= 60 ? `${Math.floor(config.timerDuration / 60)} 分 ${config.timerDuration % 60 > 0 ? `${config.timerDuration % 60} 秒` : ""}` : `${config.timerDuration} 秒`}<br />
+            {config.totalRounds > 1 && <>中場休息：{Math.floor(config.intermissionDuration / 60)} 分鐘<br /></>}
+            預估總時長：約 {Math.round((config.tableCount * config.timerDuration * config.totalRounds + (config.totalRounds > 1 ? config.intermissionDuration * (config.totalRounds - 1) : 0)) / 60)} 分鐘
+          </div>
+        </div>
+        <GoldButton onClick={createEvent} disabled={!config.eventName.trim() || creating} style={{ width: "100%" }}>{creating ? "建立中..." : "🎲 建立活動 & 產生 QR Code"}</GoldButton>
       </div>
     </div>
   );
@@ -441,25 +537,186 @@ function IntermissionControl({ onNext }) {
   );
 }
 
-// ============ SETTINGS PANEL ============
+// ============ FOLLOW-UP MANAGEMENT ============
 
-function SettingsPanel({ totalRounds, setTotalRounds, roundAwards, setRoundAwards, gospelContent, setGospelContent }) {
-  const is = { width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,162,78,0.15)", borderRadius: 6, padding: "8px 12px", color: T.text, fontFamily: "'Noto Sans TC'", fontSize: 14, outline: "none" };
+function FollowUpManagement({ followUps, setFollowUps }) {
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+  const is = { width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,162,78,0.2)", borderRadius: 8, padding: "10px 14px", color: T.text, fontFamily: "'Noto Sans TC'", fontSize: 14, outline: "none" };
+
+  const filtered = followUps.filter(f => {
+    if (filter === "contacted" && !f.contacted) return false;
+    if (filter === "pending" && f.contacted) return false;
+    if (search && !f.name.toLowerCase().includes(search.toLowerCase()) && !(f.table || "").toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  const toggleContacted = (id) => {
+    setFollowUps(prev => prev.map(f => f.id === id ? { ...f, contacted: !f.contacted } : f));
+  };
+
+  const addNote = (id, note) => {
+    setFollowUps(prev => prev.map(f => f.id === id ? { ...f, notes: note } : f));
+  };
+
+  const exportCSV = () => {
+    const headers = ["姓名", "桌別", "手機", "IG", "LINE", "興趣", "回饋", "已聯繫", "備註"];
+    const rows = followUps.map(f => [f.name, f.table || "", f.phone || "", f.ig || "", f.line || "", (f.interests || []).join("; "), f.feedback || "", f.contacted ? "是" : "否", f.notes || ""]);
+    const csv = [headers, ...rows].map(r => r.map(c => `"${(c || "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `follow-ups-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const stats = { total: followUps.length, contacted: followUps.filter(f => f.contacted).length, pending: followUps.filter(f => !f.contacted).length };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <h2 style={{ fontFamily: "'Playfair Display',serif", color: T.gold, fontSize: 28, marginBottom: 24 }}>活動設定</h2>
+      <h2 style={{ fontFamily: "'Playfair Display',serif", color: T.gold, fontSize: 28, marginBottom: 4 }}>跟進管理</h2>
+      <p style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 14, marginBottom: 24 }}>查看與管理所有參與者的跟進表單</p>
+
+      {/* Stats */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 20, width: "100%", maxWidth: 600 }}>
+        {[{ label: "總提交", value: stats.total, color: T.gold }, { label: "已聯繫", value: stats.contacted, color: T.green }, { label: "待跟進", value: stats.pending, color: T.amber }].map(s => (
+          <div key={s.label} style={{ flex: 1, background: T.bgCard, borderRadius: 12, padding: "14px 16px", textAlign: "center", border: "1px solid rgba(212,162,78,0.15)" }}>
+            <div style={{ fontFamily: "'Playfair Display'", color: s.color, fontSize: 28, fontWeight: 700 }}>{s.value}</div>
+            <div style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 12 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Search & Filter */}
+      <div style={{ display: "flex", gap: 8, width: "100%", maxWidth: 600, marginBottom: 16 }}>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜尋姓名或桌別..." style={{ ...is, flex: 1 }} onFocus={e => e.target.style.borderColor = T.gold} onBlur={e => e.target.style.borderColor = "rgba(212,162,78,0.2)"} />
+        {["all", "pending", "contacted"].map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{ background: filter === f ? T.gold : "transparent", color: filter === f ? T.bg : T.textMuted, border: `1px solid ${filter === f ? T.gold : "rgba(212,162,78,0.3)"}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontFamily: "'Noto Sans TC'", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>
+            {f === "all" ? "全部" : f === "pending" ? "待跟進" : "已聯繫"}
+          </button>
+        ))}
+      </div>
+
+      {/* Export */}
+      <div style={{ width: "100%", maxWidth: 600, marginBottom: 16, textAlign: "right" }}>
+        <button onClick={exportCSV} disabled={followUps.length === 0} style={{ background: "transparent", border: "1px solid rgba(212,162,78,0.3)", borderRadius: 8, padding: "6px 14px", color: T.warm, fontFamily: "'Noto Sans TC'", fontSize: 12, cursor: followUps.length > 0 ? "pointer" : "not-allowed", opacity: followUps.length > 0 ? 1 : 0.4 }}>📥 匯出 CSV</button>
+      </div>
+
+      {/* List */}
+      {filtered.length === 0 ? (
+        <div style={{ background: T.bgCard, borderRadius: 16, padding: 40, width: "100%", maxWidth: 600, textAlign: "center", border: "1px solid rgba(212,162,78,0.1)" }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>{followUps.length === 0 ? "📋" : "🔍"}</div>
+          <p style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 14 }}>
+            {followUps.length === 0 ? "尚未收到任何跟進表單" : "沒有符合條件的結果"}
+          </p>
+          {followUps.length === 0 && <p style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 12, marginTop: 8 }}>當參與者在前台提交跟進表單後，資料會顯示在這裡</p>}
+        </div>
+      ) : (
+        <div style={{ width: "100%", maxWidth: 600, display: "flex", flexDirection: "column", gap: 10 }}>
+          {filtered.map(f => {
+            const expanded = expandedId === f.id;
+            return (
+              <div key={f.id} style={{ background: T.bgCard, borderRadius: 12, border: `1px solid rgba(212,162,78,${f.contacted ? 0.1 : 0.25})`, overflow: "hidden", transition: "all 0.2s" }}>
+                {/* Summary row */}
+                <div onClick={() => setExpandedId(expanded ? null : f.id)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 18px", cursor: "pointer" }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: f.contacted ? T.green : T.amber, flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Noto Sans TC'", color: T.text, fontSize: 15, fontWeight: 600 }}>{f.name}</div>
+                    <div style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 12, display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
+                      {f.table && <span>{TABLE_EMOJIS[TABLES.indexOf(f.table)] || "🍷"} {f.table}桌</span>}
+                      {f.phone && <span>📱 {f.phone}</span>}
+                      {f.ig && <span>IG: {f.ig}</span>}
+                      {f.line && <span>LINE: {f.line}</span>}
+                    </div>
+                  </div>
+                  <span style={{ color: T.textMuted, fontSize: 16, transform: expanded ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }}>▼</span>
+                </div>
+                {/* Expanded details */}
+                {expanded && (
+                  <div style={{ padding: "0 18px 16px", borderTop: "1px solid rgba(212,162,78,0.1)", animation: "fadeSlideUp 0.3s ease" }}>
+                    {f.interests && f.interests.length > 0 && (
+                      <div style={{ marginTop: 12 }}>
+                        <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 12, fontWeight: 500, marginBottom: 6 }}>感興趣</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          {f.interests.map((int, i) => <span key={i} style={{ background: "rgba(212,162,78,0.1)", border: "1px solid rgba(212,162,78,0.2)", borderRadius: 12, padding: "3px 10px", fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 11 }}>{int}</span>)}
+                        </div>
+                      </div>
+                    )}
+                    {f.feedback && (
+                      <div style={{ marginTop: 12 }}>
+                        <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 12, fontWeight: 500, marginBottom: 4 }}>回饋</div>
+                        <p style={{ fontFamily: "'Noto Sans TC'", color: T.text, fontSize: 13, margin: 0, lineHeight: 1.6, background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: "8px 12px" }}>{f.feedback}</p>
+                      </div>
+                    )}
+                    {/* Notes */}
+                    <div style={{ marginTop: 12 }}>
+                      <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 12, fontWeight: 500, marginBottom: 4 }}>管理員備註</div>
+                      <textarea value={f.notes || ""} onChange={e => addNote(f.id, e.target.value)} placeholder="新增備註..." rows={2} style={{ ...is, resize: "vertical", fontSize: 12 }} onFocus={e => e.target.style.borderColor = T.gold} onBlur={e => e.target.style.borderColor = "rgba(212,162,78,0.2)"} />
+                    </div>
+                    {/* Actions */}
+                    <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                      <button onClick={() => toggleContacted(f.id)} style={{ background: f.contacted ? "rgba(39,174,96,0.15)" : "rgba(212,162,78,0.1)", border: `1px solid ${f.contacted ? "rgba(39,174,96,0.3)" : "rgba(212,162,78,0.2)"}`, borderRadius: 8, padding: "8px 16px", color: f.contacted ? T.green : T.warm, fontFamily: "'Noto Sans TC'", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                        {f.contacted ? "✅ 已聯繫" : "📞 標記為已聯繫"}
+                      </button>
+                    </div>
+                    <div style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 11, marginTop: 8 }}>
+                      提交時間：{f.submittedAt ? new Date(f.submittedAt).toLocaleString("zh-TW") : "未知"}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============ SETTINGS PANEL ============
+
+function SettingsPanel({ config, setConfig, roundAwards, setRoundAwards, gospelContent, setGospelContent }) {
+  const is = { width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,162,78,0.15)", borderRadius: 6, padding: "8px 12px", color: T.text, fontFamily: "'Noto Sans TC'", fontSize: 14, outline: "none" };
+  const chipBtn = (active) => ({ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${active ? T.gold : "rgba(212,162,78,0.2)"}`, background: active ? T.gold : "transparent", color: active ? T.bg : T.textMuted, fontFamily: "'Noto Sans TC'", fontSize: 15, fontWeight: 700, cursor: "pointer" });
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <h2 style={{ fontFamily: "'Playfair Display',serif", color: T.gold, fontSize: 28, marginBottom: 24 }}>進階設定</h2>
       <div style={{ width: "100%", maxWidth: 500 }}>
         {/* Round count */}
         <div style={{ background: T.bgCard, borderRadius: 16, padding: 24, border: "1px solid rgba(212,162,78,0.15)", marginBottom: 16 }}>
           <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>🎯 比賽回合數</div>
           <div style={{ display: "flex", gap: 8 }}>
-            {[1, 2, 3].map(n => <button key={n} onClick={() => setTotalRounds(n)} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${totalRounds === n ? T.gold : "rgba(212,162,78,0.2)"}`, background: totalRounds === n ? T.gold : "transparent", color: totalRounds === n ? T.bg : T.textMuted, fontFamily: "'Noto Sans TC'", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>{n} 輪</button>)}
+            {[1, 2, 3].map(n => <button key={n} onClick={() => setConfig(p => ({ ...p, totalRounds: n }))} style={chipBtn(config.totalRounds === n)}>{n} 輪</button>)}
           </div>
         </div>
+        {/* Table count */}
+        <div style={{ background: T.bgCard, borderRadius: 16, padding: 24, border: "1px solid rgba(212,162,78,0.15)", marginBottom: 16 }}>
+          <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>🪑 桌數</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <input type="number" min={2} max={20} value={config.tableCount} onChange={e => { const v = parseInt(e.target.value); if (v >= 2 && v <= 20) setConfig(p => ({ ...p, tableCount: v })); }} style={{ ...is, width: 80, textAlign: "center" }} />
+            <span style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 12 }}>桌（2~20）</span>
+          </div>
+        </div>
+        {/* Timer */}
+        <div style={{ background: T.bgCard, borderRadius: 16, padding: 24, border: "1px solid rgba(212,162,78,0.15)", marginBottom: 16 }}>
+          <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>⏱️ 每人說書時間</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {[90, 120, 180, 240, 300].map(s => <button key={s} onClick={() => setConfig(p => ({ ...p, timerDuration: s }))} style={chipBtn(config.timerDuration === s)}>{s >= 60 ? `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}` : `${s}秒`}</button>)}
+          </div>
+        </div>
+        {/* Intermission */}
+        {config.totalRounds > 1 && (
+          <div style={{ background: T.bgCard, borderRadius: 16, padding: 24, border: "1px solid rgba(212,162,78,0.15)", marginBottom: 16 }}>
+            <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>☕ 中場休息</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[180, 300, 600].map(s => <button key={s} onClick={() => setConfig(p => ({ ...p, intermissionDuration: s }))} style={chipBtn(config.intermissionDuration === s)}>{Math.floor(s / 60)} 分鐘</button>)}
+            </div>
+          </div>
+        )}
         {/* Awards */}
         <div style={{ background: T.bgCard, borderRadius: 16, padding: 24, border: "1px solid rgba(212,162,78,0.15)", marginBottom: 16 }}>
           <div style={{ fontFamily: "'Noto Sans TC'", color: T.warm, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>🏆 獎項名稱</div>
-          {Array.from({ length: totalRounds }).map((_, ri) => <div key={ri} style={{ marginBottom: 12 }}>
+          {Array.from({ length: config.totalRounds }).map((_, ri) => <div key={ri} style={{ marginBottom: 12 }}>
             <div style={{ fontFamily: "'Noto Sans TC'", color: T.textMuted, fontSize: 12, marginBottom: 4 }}>第 {ri + 1} 回合</div>
             {["冠軍", "亞軍", "季軍"].map((place, pi) => <input key={pi} value={roundAwards[ri]?.[pi] || ""} onChange={e => { const na = [...roundAwards]; if (!na[ri]) na[ri] = ["", "", ""]; na[ri] = [...na[ri]]; na[ri][pi] = e.target.value; setRoundAwards(na) }} placeholder={`${place} 獎項名稱`} style={{ ...is, marginBottom: 4 }} onFocus={e => e.target.style.borderColor = T.gold} onBlur={e => e.target.style.borderColor = "rgba(212,162,78,0.15)"} />)}
           </div>)}
@@ -478,7 +735,7 @@ function SettingsPanel({ totalRounds, setTotalRounds, roundAwards, setRoundAward
 
 // ============ ADMIN SIDEBAR ============
 
-function Sidebar({ screen, setScreen, totalRounds, projector, setProjector, eventData }) {
+function Sidebar({ screen, setScreen, totalRounds, projector, setProjector, eventData, followUpCount }) {
   const sections = [
     { id: "setup", icon: "⚙️", label: "活動設定" },
     { id: "checkin", icon: "✍️", label: "簽到管理" },
@@ -489,7 +746,7 @@ function Sidebar({ screen, setScreen, totalRounds, projector, setProjector, even
     ]),
     { id: "recap", icon: "📖", label: "故事牆" },
     { id: "gospel", icon: "✝️", label: "福音" },
-    { id: "followup", icon: "🤝", label: "跟進表單" },
+    { id: "followup", icon: "🤝", label: "跟進表單", badge: followUpCount || 0 },
     { id: "settings", icon: "🔧", label: "進階設定" },
   ];
 
@@ -514,7 +771,8 @@ function Sidebar({ screen, setScreen, totalRounds, projector, setProjector, even
         {sections.map(s => (
           <button key={s.id} onClick={() => setScreen(s.id)} style={btnStyle(screen === s.id)}>
             <span style={{ fontSize: 15, width: 20, textAlign: "center" }}>{s.icon}</span>
-            <span>{s.label}</span>
+            <span style={{ flex: 1 }}>{s.label}</span>
+            {s.badge > 0 && <span style={{ background: T.amber, color: T.bg, borderRadius: 10, padding: "1px 7px", fontSize: 11, fontWeight: 700, fontFamily: "'Noto Sans TC'" }}>{s.badge}</span>}
           </button>
         ))}
       </div>
@@ -546,11 +804,19 @@ export default function AdminApp() {
   const [screen, setScreen] = useState("setup");
   const [eventData, setEventData] = useState(null);
   const [participants, setParticipants] = useState(DEMO_PARTICIPANTS);
-  const [tableCount, setTableCount] = useState(8);
   const [scores, setScores] = useState({});
   const [projector, setProjector] = useState(false);
+  const [followUps, setFollowUps] = useState([]);
 
-  const [totalRounds, setTotalRounds] = useState(2);
+  // Unified config object
+  const [config, setConfig] = useState({
+    eventName: "故事之夜 Vol.1",
+    tableCount: 8,
+    totalRounds: 2,
+    timerDuration: 180,
+    intermissionDuration: 300,
+  });
+
   const [nextRound, setNextRound] = useState(2);
   const [roundAwards, setRoundAwards] = useState([
     ["🏆 故事王", "🥈 銀舌獎", "🥉 勇氣獎"],
@@ -571,9 +837,12 @@ export default function AdminApp() {
   const [projVote, setProjVote] = useState({ voteCount: 0, lastScore: 0, roundScores: {}, tableReps: [] });
   const [intermissionCd, setIntermissionCd] = useState(300);
 
+  // Derived values from config
+  const { tableCount, totalRounds } = config;
+
   useEffect(() => {
-    if (screen === "intermission") { setIntermissionCd(300); const t = setInterval(() => setIntermissionCd(p => (p > 0 ? p - 1 : 0)), 1000); return () => clearInterval(t); }
-  }, [screen]);
+    if (screen === "intermission") { setIntermissionCd(config.intermissionDuration); const t = setInterval(() => setIntermissionCd(p => (p > 0 ? p - 1 : 0)), 1000); return () => clearInterval(t); }
+  }, [screen, config.intermissionDuration]);
 
   // Broadcast state to public app whenever screen/phase changes
   useEffect(() => {
@@ -589,24 +858,29 @@ export default function AdminApp() {
       } : null,
       tableCount,
       participantCount: participants.length,
-      eventName: eventData?.name || "",
+      eventName: eventData?.name || config.eventName,
       gospel: gospelContent,
     });
   }, [screen, projPhase, projTopic, projStoryteller.rep?.id, tableCount, participants.length]);
 
-  // Listen for participant votes
+  // Listen for participant actions
   useEffect(() => {
     broadcast.on("vote:submit", (data) => {
-      // Could aggregate votes here
       console.log("Vote received from participant:", data);
     });
     broadcast.on("participant:checkin", (data) => {
       console.log("Participant checked in:", data);
     });
+    broadcast.on("participant:followup", (data) => {
+      setFollowUps(prev => {
+        if (prev.some(f => f.id === data.id)) return prev;
+        return [...prev, { ...data, contacted: false, notes: "", submittedAt: Date.now() }];
+      });
+    });
   }, [broadcast]);
 
   const handleSpinWheel = () => setSpinTrigger(p => p + 1);
-  const handleEventCreated = (data) => { setEventData(data); if (data.table_count) setTableCount(data.table_count); setScreen("checkin") };
+  const handleEventCreated = (data) => { setEventData(data); setScreen("checkin"); };
   const eventUrl = eventData ? (API_URL ? `${window.location.origin}?event=${eventData.id}` : `${window.location.origin}`) : "";
 
   const goAfterAward = (roundNum) => {
@@ -656,14 +930,14 @@ export default function AdminApp() {
       if (screen === `award${i}`) return <AwardCeremony tableReps={projVote.tableReps} roundScores={projVote.roundScores} round={i} awards={roundAwards[i - 1]} onNext={() => goAfterAward(i)} />;
     }
     switch (screen) {
-      case "setup": return <EventSetupScreen onEventCreated={handleEventCreated} />;
-      case "checkin": return <CheckInManagement participants={participants} setParticipants={setParticipants} tableCount={tableCount} setTableCount={setTableCount} />;
+      case "setup": return <EventSetupScreen onEventCreated={handleEventCreated} config={config} setConfig={setConfig} />;
+      case "checkin": return <CheckInManagement participants={participants} setParticipants={setParticipants} tableCount={tableCount} setTableCount={(n) => setConfig(p => ({ ...p, tableCount: n }))} />;
       case "intermission": return <IntermissionControl onNext={() => setScreen(`round${nextRound}`)} />;
       case "recap": return <div><StoryRecapWall participants={participants} tableCount={tableCount} scores={scores} /><div style={{ display: "flex", justifyContent: "center", padding: "0 20px 40px" }}><GoldButton onClick={() => setScreen("gospel")}>進入今晚最後一個故事 →</GoldButton></div></div>;
       case "gospel": return <GospelView gospelContent={gospelContent} onNext={() => setScreen("followup")} />;
-      case "followup": return <StoryRecapWall participants={participants} tableCount={tableCount} scores={scores} />;
-      case "settings": return <SettingsPanel totalRounds={totalRounds} setTotalRounds={setTotalRounds} roundAwards={roundAwards} setRoundAwards={setRoundAwards} gospelContent={gospelContent} setGospelContent={setGospelContent} />;
-      default: return <EventSetupScreen onEventCreated={handleEventCreated} />;
+      case "followup": return <FollowUpManagement followUps={followUps} setFollowUps={setFollowUps} />;
+      case "settings": return <SettingsPanel config={config} setConfig={setConfig} roundAwards={roundAwards} setRoundAwards={setRoundAwards} gospelContent={gospelContent} setGospelContent={setGospelContent} />;
+      default: return <EventSetupScreen onEventCreated={handleEventCreated} config={config} setConfig={setConfig} />;
     }
   };
 
@@ -674,16 +948,9 @@ export default function AdminApp() {
         <AnimatedBG />
         {rt.connected && <LiveVoteIndicator connected={rt.connected} voteCount={rt.voteCount} />}
         {renderProjector()}
-        {/* Floating control panel in projector mode */}
         <button onClick={() => setProjector(false)} style={{ position: "fixed", bottom: 20, right: 20, zIndex: 300, width: 56, height: 56, borderRadius: "50%", border: "none", background: T.red, color: "#fff", fontSize: 20, cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>📱</button>
-        {/* Mini nav in projector mode */}
         <div style={{ position: "fixed", bottom: 20, left: 20, zIndex: 300, display: "flex", gap: 4, background: "rgba(15,11,7,0.9)", borderRadius: 12, padding: 6, border: "1px solid rgba(212,162,78,0.2)" }}>
-          {["checkin", "round1", "award1", "intermission", "round2", "award2", "recap", "gospel"].filter(s => {
-            if (s === "intermission" && totalRounds < 2) return false;
-            if (s === "round2" && totalRounds < 2) return false;
-            if (s === "award2" && totalRounds < 2) return false;
-            return true;
-          }).map(s => <button key={s} onClick={() => setScreen(s)} style={{ background: screen === s ? T.gold : "transparent", color: screen === s ? T.bg : T.textMuted, border: "none", borderRadius: 6, padding: "6px 10px", fontFamily: "'Noto Sans TC'", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{s.replace("round", "R").replace("award", "🏆").replace("intermission", "☕").replace("checkin", "✍️").replace("recap", "📖").replace("gospel", "✝️")}</button>)}
+          {["checkin", ...Array.from({ length: totalRounds }).flatMap((_, i) => [`round${i + 1}`, `award${i + 1}`, ...(i < totalRounds - 1 ? ["intermission"] : [])]), "recap", "gospel"].map(s => <button key={s} onClick={() => setScreen(s)} style={{ background: screen === s ? T.gold : "transparent", color: screen === s ? T.bg : T.textMuted, border: "none", borderRadius: 6, padding: "6px 10px", fontFamily: "'Noto Sans TC'", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{s.replace(/round(\d+)/, "R$1").replace(/award(\d+)/, "🏆$1").replace("intermission", "☕").replace("checkin", "✍️").replace("recap", "📖").replace("gospel", "✝️")}</button>)}
         </div>
       </div>
     );
@@ -693,7 +960,7 @@ export default function AdminApp() {
   return (
     <div style={{ minHeight: "100vh", fontFamily: "'Noto Sans TC',sans-serif", color: T.text, overflowX: "hidden", display: "flex" }}>
       <AnimatedBG />
-      <Sidebar screen={screen} setScreen={setScreen} totalRounds={totalRounds} projector={projector} setProjector={setProjector} eventData={eventData} />
+      <Sidebar screen={screen} setScreen={setScreen} totalRounds={totalRounds} projector={projector} setProjector={setProjector} eventData={eventData} followUpCount={followUps.length} />
       <div style={{ marginLeft: 220, flex: 1, position: "relative", zIndex: 1, padding: "40px 24px", minHeight: "100vh" }}>
         {renderContent()}
       </div>
